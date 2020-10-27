@@ -1,0 +1,81 @@
+﻿@model IEnumerable<InfiniteScrollTest.Models.TestModel>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+       <table>
+           <thead>
+               <tr>
+                   @foreach (var prop in (List<string>)TempData["types"])
+                   {
+                       <th>@prop</th>
+                   }
+               </tr>
+           </thead>
+           <tbody id="table_body">
+               @foreach (var item in Model)
+               {
+               <tr>
+                   <td>@item.MyProperty1</td>
+                   <td>@item.MyProperty2</td>
+                   <td>@item.MyProperty3</td>
+                   <td>@item.MyProperty4</td>
+                   <td>@item.MyProperty5</td>
+               </tr>
+               }
+           </tbody>
+       </table>
+    <style>
+        th{
+            font-size: 30px
+        }
+        td{
+            font-size: 30px
+        }
+    </style>
+    <script>
+        let pageIndex = 1;
+        let isProcessing = false;
+        window.addEventListener('scroll', async () => {
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
+            if (scrollTop + clientHeight > scrollHeight - 5 && !isProcessing) {
+                {
+                    isProcessing = true
+                    pageIndex += 1
+                    await getListResult(pageIndex)
+                    setTimeout(() => {isProcessing = false }, 500)
+                }
+            }
+        })
+        let getListResult = async (pageIndex) => {
+            fetch("/home/getpagedjson", {
+                headers: { "Content-Type": "application/json" },
+                credentials: 'include',
+                body: JSON.stringify({pageIndex}),
+                method: "POST"
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw response;
+                }
+                return response.json();
+            })
+            .then(json => {
+                json.forEach((x, i) => {
+                    console.log(x)
+                    var tableBody = document.getElementById("table_body")
+                    var row = `<tr>
+                                @foreach (var item in (List<string>)TempData["types"])
+                                {
+                                    <td>${json[i]["@item"]}</td>
+                                }
+                                </tr>`
+                    tableBody.innerHTML += row
+                })
+            })
+            .catch(response => console.log(response))
+            }
+    </script>
+</body>
+</html>
